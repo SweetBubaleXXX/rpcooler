@@ -4,7 +4,7 @@ Description=Cooler for Raspberry Pi
 [Service]
 ExecStart=/bin/rpcooler
 Restart=always
-RestartSec=1s
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target

@@ -22,6 +22,13 @@ Install *deb* package:
 ```bash
 dpkg -i rpcooler.deb
 ```
+
+Enable at startup:
+
+```bash
+systemctl enable rpcooler.service
+```
+
 # Configuration
 
 Config file location is `/etc/rpcooler.conf`
