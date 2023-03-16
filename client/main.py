@@ -16,6 +16,6 @@ while True:
     time.sleep(SLEEP_TIME)
     if sys.stdin not in select.select([sys.stdin], [], [], SLEEP_TIME)[0]:
         continue
-    cooler_state = sys.stdin.buffer.readline(1)
+    cooler_state = sys.stdin.buffer.readline()[0]
     onboard_led.value(cooler_state)
     cooler.value(cooler_state)
