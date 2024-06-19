@@ -13,7 +13,7 @@ ONBOARD_LED = Pin(25, Pin.OUT)
 COOLER_PIN = Pin(0, Pin.OUT)
 
 
-if __name__ == "__main__":
+def main() -> None:
     ONBOARD_LED.value(0)
     COOLER_PIN.value(0)
 
@@ -30,3 +30,7 @@ if __name__ == "__main__":
             idle_ticks = 0
         else:
             idle_ticks += 1
+
+
+if __name__ == "__main__":
+    main()
