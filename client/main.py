@@ -4,18 +4,33 @@ import time
 
 from machine import Pin
 
-SLEEP_TIME=0.05
+READ_TIMEOUT_SEC = 0.05
+EMERGENCY_BACKOFF_AFTER_SEC = 50
+TICKS_TO_EMERGENCY_BACKOFF = EMERGENCY_BACKOFF_AFTER_SEC // READ_TIMEOUT_SEC
 
-onboard_led = Pin(25, Pin.OUT)
-onboard_led.value(0)
 
-cooler = Pin(0, Pin.OUT)
-cooler.value(0)
+ONBOARD_LED = Pin(25, Pin.OUT)
+COOLER_PIN = Pin(0, Pin.OUT)
 
-while True:
-    time.sleep(SLEEP_TIME)
-    if sys.stdin not in select.select([sys.stdin], [], [], SLEEP_TIME)[0]:
-        continue
-    cooler_state = sys.stdin.buffer.readline()[0]
-    onboard_led.value(cooler_state)
-    cooler.value(cooler_state)
+
+def main() -> None:
+    ONBOARD_LED.value(0)
+    COOLER_PIN.value(0)
+
+    idle_ticks = 0
+    while True:
+        time.sleep(READ_TIMEOUT_SEC)
+        if idle_ticks >= TICKS_TO_EMERGENCY_BACKOFF:
+            COOLER_PIN.value(1)
+            ONBOARD_LED.value(1)
+
+        if sys.stdin in select.select([sys.stdin], [], [], READ_TIMEOUT_SEC)[0]:
+            cooler_state = sys.stdin.buffer.readline()[0]
+            COOLER_PIN.value(cooler_state)
+            idle_ticks = 0
+        else:
+            idle_ticks += 1
+
+
+if __name__ == "__main__":
+    main()
