@@ -27,6 +27,7 @@ def main() -> None:
         if sys.stdin in select.select([sys.stdin], [], [], READ_TIMEOUT_SEC)[0]:
             cooler_state = sys.stdin.buffer.readline()[0]
             COOLER_PIN.value(cooler_state)
+            ONBOARD_LED.value(0)
             idle_ticks = 0
         else:
             idle_ticks += 1
