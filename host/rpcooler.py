@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import logging
 import time
 from os import getenv
@@ -41,13 +42,29 @@ def create_should_turn_on_cooler():
     return lambda t: should_turn_on_cooler(t).to_bytes(1, "big")
 
 
+def log_state(cooler_state: bytes) -> None:
+    cooler_is_on = bool(int.from_bytes(cooler_state))
+    if cooler_is_on:
+        state_text = "\033[92mON \033[0m"
+    else:
+        state_text = "\033[91mOFF\033[0m"
+    print(f"Cooler is {state_text}", end="\r")
+
+
 if __name__ == "__main__":
     should_turn_on_cooler = create_should_turn_on_cooler()
     serial_device = serial.Serial(SERIAL_DEVICE_PATH)
+
     while serial_device:
         time.sleep(INTERVAL)
+
         cpu_temp = get_cpu_temp()
         if cpu_temp is None:
             continue
-        serial_device.write(should_turn_on_cooler(cpu_temp))
+
+        cooler_state = should_turn_on_cooler(cpu_temp)
+
+        serial_device.write(cooler_state)
         serial_device.write(b"\n")
+
+        log_state(cooler_state)
