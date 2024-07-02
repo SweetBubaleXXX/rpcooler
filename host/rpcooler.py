@@ -43,7 +43,7 @@ def create_should_turn_on_cooler():
 
 
 def log_state(cooler_state: bytes) -> None:
-    cooler_is_on = bool(int.from_bytes(cooler_state))
+    cooler_is_on = bool(int.from_bytes(cooler_state, "big"))
     if cooler_is_on:
         state_text = "\033[92mON \033[0m"
     else:
