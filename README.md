@@ -10,7 +10,7 @@ pip install -r host/requirements-dev.txt
 Build executable:
 
 ```bash
-pyinstaller -F --distpath rpcooler/bin host/rpcooler.py
+pyinstaller -F --python-option u --distpath rpcooler/bin host/rpcooler.py
 ```
 Create *deb* package:
 
