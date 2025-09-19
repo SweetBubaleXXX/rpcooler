@@ -122,36 +122,36 @@ def get_cooler_state(metrics):
 def display_metrics(metrics):
     row_height = 15
 
-    display.rect(30, 0, TFT_WIDTH, row_height, COLOR_BLACK)
+    display.rect(30, 0, TFT_WIDTH, row_height, COLOR_BLACK, fill=True)
     display.text(0, 0, "CPU", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(30, 0, *get_cpu_load(metrics), bgcolor=COLOR_BLACK)
     display.text(80, 0, *get_cpu_freq(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(70, row_height, TFT_WIDTH, row_height * 2, COLOR_BLACK)
+    display.rect(70, row_height, TFT_WIDTH, row_height * 2, COLOR_BLACK, fill=True)
     display.text(0, row_height, "CPU-temp", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(70, row_height, *get_cpu_temp(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(60, row_height * 2, TFT_WIDTH, row_height * 3, COLOR_BLACK)
+    display.rect(60, row_height * 2, TFT_WIDTH, row_height * 3, COLOR_BLACK, fill=True)
     display.text(0, row_height * 2, "Cooler", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(60, row_height * 2, *get_cooler_state(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(40, row_height * 3, TFT_WIDTH, row_height * 4, COLOR_BLACK)
+    display.rect(40, row_height * 3, TFT_WIDTH, row_height * 4, COLOR_BLACK, fill=True)
     display.text(0, row_height * 3, "RAM", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(40, row_height * 3, *get_ram_usage(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(45, row_height * 4, TFT_WIDTH, row_height * 5, COLOR_BLACK)
+    display.rect(45, row_height * 4, TFT_WIDTH, row_height * 5, COLOR_BLACK, fill=True)
     display.text(0, row_height * 4, "Swap", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(45, row_height * 4, *get_swap_usage(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(45, row_height * 5, TFT_WIDTH, row_height * 6, COLOR_BLACK)
+    display.rect(45, row_height * 5, TFT_WIDTH, row_height * 6, COLOR_BLACK, fill=True)
     display.text(0, row_height * 5, "Disk", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(45, row_height * 5, *get_disk_usage(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(50, row_height * 6, TFT_WIDTH, row_height * 7, COLOR_BLACK)
+    display.rect(50, row_height * 6, TFT_WIDTH, row_height * 7, COLOR_BLACK, fill=True)
     display.text(0, row_height * 6, "RAID", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(50, row_height * 6, *get_raid_state(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(55, row_height * 7, TFT_WIDTH, row_height * 8, COLOR_BLACK)
+    display.rect(55, row_height * 7, TFT_WIDTH, row_height * 8, COLOR_BLACK, fill=True)
     display.text(0, row_height * 7, "Uptime", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
     display.text(55, row_height * 7, *get_uptime(metrics), bgcolor=COLOR_BLACK)
 
