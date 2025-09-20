@@ -176,7 +176,6 @@ def display_metrics(metrics):
     display.text(45, row_height * 8, *get_disk_usage(metrics), bgcolor=COLOR_BLACK)
 
     for i, external_storage in enumerate(get_external_storages(metrics)):
-        display.rect(0, row_height * (9 + i), TFT_WIDTH, row_height * (10 + i), COLOR_BLACK, fill=True)
         display.text(0, row_height * (9 + i), *external_storage, bgcolor=COLOR_BLACK)
 
 
