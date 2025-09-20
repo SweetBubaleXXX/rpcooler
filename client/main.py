@@ -3,6 +3,7 @@ import select
 import sys
 import time
 
+import utime
 from machine import SPI, Pin
 from st7789_ext import ST7789
 
@@ -14,6 +15,7 @@ TICKS_TO_EMERGENCY_BACKOFF = EMERGENCY_BACKOFF_AFTER_SEC // READ_TIMEOUT_SEC
 
 ONBOARD_LED = Pin(25, Pin.OUT)
 COOLER_PIN = Pin(0, Pin.OUT)
+TFT_BACKLIGHT_PIN = Pin(12, Pin.OUT)
 
 display = ST7789(
     SPI(1, baudrate=40000000, polarity=0, phase=0, sck=Pin(10), mosi=Pin(11)),
@@ -80,7 +82,7 @@ def get_ram_usage(metrics):
 
 def get_swap_usage(metrics):
     swap_used = metrics.get("swap", 0) / GIGABYTE
-    swap_total = metrics.get("swap_total", 0) / GIGABYTE
+    swap_total = metrics.get("total_swap", 0) / GIGABYTE
     swap_usage = (swap_used / swap_total) * 100 if swap_total else 0
     return (
         f"{swap_used:.1f}/{swap_total:.1f} GB",
@@ -98,6 +100,14 @@ def get_disk_usage(metrics):
     )
 
 
+def get_external_storages(metrics):
+    external_storages = metrics.get("external_storages", [])
+    for storage in external_storages:
+        location = storage.get("location", "Unknown")
+        usage, color = get_disk_usage(storage)
+        yield f"{location} {usage}", color
+
+
 def get_raid_state(metrics):
     raid_state = metrics.get("raid_state", "inactive")
     color = COLOR_GREEN if raid_state == "healthy" else COLOR_RED
@@ -113,6 +123,13 @@ def get_uptime(metrics):
     return uptime, COLOR_GRAY
 
 
+def get_time(metrics):
+    timestamp = metrics.get("timestamp", 0)
+    _, _, _, hours, minutes, seconds, *_ = utime.localtime(timestamp + 3 * 3600)
+    formatted_time = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    return formatted_time, COLOR_GRAY
+
+
 def get_cooler_state(metrics):
     cooler_state = metrics.get("cooler_state", False)
     color = COLOR_GREEN if cooler_state else COLOR_RED
@@ -122,42 +139,56 @@ def get_cooler_state(metrics):
 def display_metrics(metrics):
     row_height = 15
 
-    display.rect(30, 0, TFT_WIDTH, row_height, COLOR_BLACK, fill=True)
-    display.text(0, 0, "CPU", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(30, 0, *get_cpu_load(metrics), bgcolor=COLOR_BLACK)
-    display.text(80, 0, *get_cpu_freq(metrics), bgcolor=COLOR_BLACK)
+    display.rect(0, 0, TFT_WIDTH, row_height, COLOR_BLACK, fill=True)
+    display.text(0, 0, *get_time(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(70, row_height, TFT_WIDTH, row_height * 2, COLOR_BLACK, fill=True)
-    display.text(0, row_height, "CPU-temp", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(70, row_height, *get_cpu_temp(metrics), bgcolor=COLOR_BLACK)
+    display.rect(55, row_height, TFT_WIDTH, row_height * 2, COLOR_BLACK, fill=True)
+    display.text(0, row_height, "Uptime", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(55, row_height, *get_uptime(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(60, row_height * 2, TFT_WIDTH, row_height * 3, COLOR_BLACK, fill=True)
-    display.text(0, row_height * 2, "Cooler", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(60, row_height * 2, *get_cooler_state(metrics), bgcolor=COLOR_BLACK)
+    display.rect(30, row_height * 2, TFT_WIDTH, row_height * 3, COLOR_BLACK, fill=True)
+    display.text(0, row_height * 2, "CPU", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(30, row_height * 2, *get_cpu_load(metrics), bgcolor=COLOR_BLACK)
+    display.text(80, row_height * 2, *get_cpu_freq(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(40, row_height * 3, TFT_WIDTH, row_height * 4, COLOR_BLACK, fill=True)
-    display.text(0, row_height * 3, "RAM", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(40, row_height * 3, *get_ram_usage(metrics), bgcolor=COLOR_BLACK)
+    display.rect(70, row_height * 3, TFT_WIDTH, row_height * 4, COLOR_BLACK, fill=True)
+    display.text(0, row_height * 3, "CPU-temp", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(70, row_height * 3, *get_cpu_temp(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(45, row_height * 4, TFT_WIDTH, row_height * 5, COLOR_BLACK, fill=True)
-    display.text(0, row_height * 4, "Swap", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(45, row_height * 4, *get_swap_usage(metrics), bgcolor=COLOR_BLACK)
+    display.rect(60, row_height * 4, TFT_WIDTH, row_height * 5, COLOR_BLACK, fill=True)
+    display.text(0, row_height * 4, "Cooler", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(60, row_height * 4, *get_cooler_state(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(45, row_height * 5, TFT_WIDTH, row_height * 6, COLOR_BLACK, fill=True)
-    display.text(0, row_height * 5, "Disk", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(45, row_height * 5, *get_disk_usage(metrics), bgcolor=COLOR_BLACK)
+    display.rect(40, row_height * 5, TFT_WIDTH, row_height * 6, COLOR_BLACK, fill=True)
+    display.text(0, row_height * 5, "RAM", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(40, row_height * 5, *get_ram_usage(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(50, row_height * 6, TFT_WIDTH, row_height * 7, COLOR_BLACK, fill=True)
-    display.text(0, row_height * 6, "RAID", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(50, row_height * 6, *get_raid_state(metrics), bgcolor=COLOR_BLACK)
+    display.rect(45, row_height * 6, TFT_WIDTH, row_height * 7, COLOR_BLACK, fill=True)
+    display.text(0, row_height * 6, "Swap", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(45, row_height * 6, *get_swap_usage(metrics), bgcolor=COLOR_BLACK)
 
-    display.rect(55, row_height * 7, TFT_WIDTH, row_height * 8, COLOR_BLACK, fill=True)
-    display.text(0, row_height * 7, "Uptime", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
-    display.text(55, row_height * 7, *get_uptime(metrics), bgcolor=COLOR_BLACK)
+    display.rect(50, row_height * 7, TFT_WIDTH, row_height * 8, COLOR_BLACK, fill=True)
+    display.text(0, row_height * 7, "RAID", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(50, row_height * 7, *get_raid_state(metrics), bgcolor=COLOR_BLACK)
+
+    display.rect(45, row_height * 8, TFT_WIDTH, row_height * 9, COLOR_BLACK, fill=True)
+    display.text(0, row_height * 8, "Disk", fgcolor=COLOR_WHITE, bgcolor=COLOR_BLACK)
+    display.text(45, row_height * 8, *get_disk_usage(metrics), bgcolor=COLOR_BLACK)
+
+    for i, external_storage in enumerate(get_external_storages(metrics)):
+        display.rect(0, row_height * (9 + i), TFT_WIDTH, row_height * (10 + i), COLOR_BLACK, fill=True)
+        display.text(0, row_height * (9 + i), *external_storage, bgcolor=COLOR_BLACK)
+
+
+def is_night_mode(metrics) -> bool:
+    timestamp = metrics.get("timestamp", 0)
+    _, _, _, hours, *_ = utime.localtime(timestamp + 3 * 3600)
+    return hours >= 21 or hours <= 6
 
 
 if __name__ == "__main__":
     display.init()
+    TFT_BACKLIGHT_PIN.on()
     ONBOARD_LED.value(0)
     COOLER_PIN.value(0)
 
@@ -178,6 +209,11 @@ if __name__ == "__main__":
                 COOLER_PIN.value(metrics.get("cooler_state", 0))
                 ONBOARD_LED.value(0)
                 display_metrics(metrics)
+
+                if is_night_mode(metrics):
+                    TFT_BACKLIGHT_PIN.off()
+                else:
+                    TFT_BACKLIGHT_PIN.on()
             else:
                 idle_ticks += 1
         except Exception as e:

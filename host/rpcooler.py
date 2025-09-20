@@ -18,6 +18,7 @@ COOLER_ON_TEMP = int(getenv("COOLER_ON_TEMP", "60"))
 COOLER_ON_FRAMES = int(getenv("COOLER_ON_FRAMES", "1"))
 INTERVAL = int(getenv("INTERVAL_MS", "1000")) / 1000
 RAID_DISKS = getenv("RAID_DISKS", "sdb,sdc").split(",")
+STORAGES = getenv("STORAGES", "").split(",")
 
 
 class Metrics:
@@ -55,6 +56,15 @@ class Metrics:
         }
 
     @staticmethod
+    def get_external_storage_metrics() -> dict:
+        external_storages = []
+        for location in STORAGES:
+            if location:
+                disk = psutil.disk_usage(location)
+                external_storages.append({"location": location, "free_space": disk.free, "total_disk_size": disk.total})
+        return {"external_storages": external_storages}
+
+    @staticmethod
     def get_raid_state() -> dict:
         mdstat = subprocess.run(["cat", "/proc/mdstat"], capture_output=True, text=True).stdout
 
@@ -70,6 +80,10 @@ class Metrics:
     @staticmethod
     def get_uptime() -> dict:
         return {"uptime": time.time() - psutil.boot_time()}
+
+    @staticmethod
+    def get_timestamp() -> dict:
+        return {"timestamp": int(time.time())}
 
     @staticmethod
     def get_cpu_frequency() -> dict:
@@ -88,8 +102,10 @@ class Metrics:
             cls.get_swap_metrics,
             cls.get_cpu_load,
             cls.get_disk_metrics,
+            cls.get_external_storage_metrics,
             cls.get_raid_state,
             cls.get_uptime,
+            cls.get_timestamp,
             cls.get_cpu_frequency,
         ]
         metrics = {}
